@@ -23,7 +23,6 @@ First things first, let's make sure your environment is properly set. I will be 
  ![login to your subscription](images/azLogin.gif)
 
 We need to setup an AKS cluster, add the VSTS Agent to the Azure Container Regsitry (ACR) then define a Build queue where these agents will be attached.
-
 1. 
 
 
