@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vsts-agent
+spec:
+  replicas: 5
+  template:
+    metadata:
+      name: vsts-agent
+      namespace: default
+      labels:
+        app: vsts-agent
+        version: "0.1"
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: preprovisionned
+                operator: In
+                values:
+                - "yes"
+                - "no"
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 10
+            preference:
+              matchExpressions:
+              - key: agentpool
+                operator: In
+                values:
+                - nodepool1
+      containers:
+      - name: vsts-agent
+        resources:
+            requests:
+                memory: 1G
+                cpu: 400m
+        image: microsoft/vsts-agent:ubuntu-16.04-docker-17.03.0-ce-standard
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: VSTS_ACCOUNT
+            valueFrom:
+              secretKeyRef:
+                name: vsts
+                key: VSTS_ACCOUNT
+          - name: VSTS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: vsts
+                key: VSTS_TOKEN
+          - name: VSTS_POOL
+            value: Maven
+      # nodeSelector:
+        # builders: noDocker
+      #    type: virtual-kubelet
+      # DockerBuilder: "yes"
+      
+      tolerations:
+      - key: azure.com/aci
+        operator: "Exists"
+        effect: NoSchedule
+     

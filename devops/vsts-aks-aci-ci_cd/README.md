@@ -34,7 +34,40 @@ CLIENT_ID=$(az aks show -g OssDemos -n fzKb8s --query "servicePrincipalProfile.c
 ACR_ID=$(az acr show -n ossDemosContainerRegistry -g OssDemos --query "id" --output tsv)
 az role assignment create --assignee $CLIENT_ID --role Reader --scope $ACR_ID
 ``` 
-Create a VSTS deployment 
+## Switching to the VSTS part :
+You can work on your own projects if you want, but 
 configure virtual kubelet
 Create an HPA
+
+create secret in AKS kubectl create secret generic vsts --from-literal=VSTS_TOKEN=onqkk4slpsg4dzxcffey5f5cn6mestx2wxip3lyr7jc35so5xdnq --from-literal=VSTS_ACCOUNT=fareszekri
+
+
+https://github.com/virtual-kubelet/virtual-kubelet/blob/master/providers/azure/README.md
+```bash
+az account list -o table
+export AZURE_SUBSCRIPTION_ID="2a809161-f58d-4156-b039-dcd9e43d9c84"
+
+helm init
+
+export ACI_REGION=westeurope
+az group create --name aci-builders --location "$ACI_REGION"
+export AZURE_RG=aci-builders
+az ad sp create-for-rbac --name virtual-kubelet -o table
+export AZURE_TENANT_ID=<Tenant>
+export AZURE_CLIENT_ID=<AppId>
+export AZURE_CLIENT_SECRET=<Password>
+export VK_RELEASE=virtual-kubelet-for-aks-0.1.3
+
+
+RELEASE_NAME=virtual-kubelet
+NODE_NAME=virtual-kubelet
+CHART_URL=https://github.com/virtual-kubelet/virtual-kubelet/raw/master/charts/$VK_RELEASE.tgz
+
+curl https://raw.githubusercontent.com/virtual-kubelet/virtual-kubelet/master/scripts/createCertAndKey.sh > createCertAndKey.sh
+chmod +x createCertAndKey.sh
+. ./createCertAndKey.sh
+
+helm install "$CHART_URL" --name "$RELEASE_NAME" \
+    --set env.azureClientId="$AZURE_CLIENT_ID",env.azureClientKey="$AZURE_CLIENT_SECRET",env.azureTenantId="$AZURE_TENANT_ID",env.azureSubscriptionId="$AZURE_SUBSCRIPTION_ID",env.aciResourceGroup="$AZURE_RG",env.nodeName="$NODE_NAME",env.nodeOsType=Linux,env.apiserverCert=$cert,env.apiserverKey=$key
+```
 
